@@ -1,6 +1,5 @@
 import re
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 # 회원가입 데이터 검증 모델
 class UserCreate(BaseModel):
@@ -24,13 +23,6 @@ class UserCreate(BaseModel):
             raise ValueError('id는 소문자 영어와 숫자만 포함할 수 있습니다.')
         return v
     
-    @field_validator('phone')
-    def check_phone(cls, v):
-        # 전화번호 형식이 01012345678처럼 11자리 숫자인지 확인하는 정규식
-        if not re.match(r"^010\d{8}$", v):
-            raise ValueError('올바른 형식의 번호를 입력해주세요')
-        return v
-    
     # password1은 8자리 이상 영문, 숫자, 특수문자 포함해야 함
     @field_validator('password1')
     def validate_password1(cls, v):
@@ -47,12 +39,13 @@ class UserCreate(BaseModel):
 
         return v
     
-    # password1과 password2가 일치하는지 검증
-    @field_validator("password2")
-    def passwords_match(cls, v, info):
-        if 'password1' in info.data and v != info.data['password1']:
+       # password1과 password2가 일치하는지 검증
+    @model_validator(mode="after")
+    def passwords_match(self):
+        print(f"password1: {self.password1}, password2: {self.password2}")  # 값 확인용 로그
+        if self.password1 != self.password2:
             raise ValueError("비밀번호가 일치하지 않습니다.")
-        return v
+        return self
 
 # 토큰 응답 모델
 class Token(BaseModel):
