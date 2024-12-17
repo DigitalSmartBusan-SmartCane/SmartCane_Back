@@ -1,8 +1,7 @@
 # __pycache__ 폴더 무시
 __pycache__/
 
-# config 파일 무시
-config.py
+# .env 파일 무시
 .env
 
 # *.db 파일 (데이터베이스 파일) 무시
