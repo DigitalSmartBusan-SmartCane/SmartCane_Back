@@ -6,19 +6,56 @@ from domain.user.user_schema import UserFindRequest
 import secrets
 import smtplib
 from email.mime.text import MIMEText
-
+import random
 from jose import jwt
 from datetime import datetime, timedelta
 from config import settings
 
+
 # 비밀번호 해싱을 위한 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# 메모리에 인증 코드를 저장하는 딕셔너리
+verification_codes = {}
+# 인증 코드 생성 및 이메일 발송 함수
+def send_verification_code(db: Session, email: str):
+    # 4자리 랜덤 인증 코드 생성
+    verification_code = random.randint(1000, 9999)
+    verification_codes[email] = verification_code  # 메모리에 인증 코드 저장
+
+    # 이메일 전송 내용 작성
+    message = MIMEText(f"인증 코드: {verification_code}")
+    message["Subject"] = "이메일 인증 코드"
+    message["From"] = settings.SENDER_EMAIL
+    message["To"] = email
+
+    try:
+        # SMTP 서버 연결 및 이메일 전송
+        with smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+            server.login(settings.SENDER_EMAIL, settings.SENDER_PASSWORD)
+            server.sendmail(settings.SENDER_EMAIL, email, message.as_string())
+        return {"detail": "인증번호가 이메일로 발송되었습니다."}
+    except Exception as e:
+        raise Exception(f"이메일 전송 중 오류가 발생했습니다: {str(e)}")
+
+# 인증 코드 확인 함수
+def verify_code(email: str, code: int):
+    stored_code = verification_codes.get(email)
+    if not stored_code:
+        raise Exception("인증 코드가 존재하지 않습니다.")
+    if stored_code != code:
+        raise Exception("인증 코드가 일치하지 않습니다.")
+    # 인증 성공 시 인증 코드 삭제
+    del verification_codes[email]
+    return {"detail": "이메일 인증이 완료되었습니다."}
+
 # 새 사용자 생성 함수
 def create_user(db: Session, user_create: UserCreate):
-    db_user = User(id=user_create.id, username=user_create.username,
-                password=pwd_context.hash(user_create.password1),
-                email=user_create.email)
+    db_user = User(
+        id=user_create.id,
+        username=user_create.username,
+        password=pwd_context.hash(user_create.password1),
+        email=user_create.email)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)  # 새로 추가된 사용자 정보를 가져옴

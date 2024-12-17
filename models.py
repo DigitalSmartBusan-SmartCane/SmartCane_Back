@@ -7,9 +7,7 @@ class User(Base):
     id = Column(String, primary_key=True)           # 사용자 ID
     username = Column(String, unique=True, nullable=False)   # 사용자명
     password = Column(String, nullable=False)       # 해싱된 비밀번호
-    phone = Column(String, nullable=True)  # 전화번호
     email = Column(String, unique=True, nullable=False)      # 이메일
-    
     reset_token = Column(String, nullable=True)  # 추가
 
 #센서 데이터 테이블 모델
