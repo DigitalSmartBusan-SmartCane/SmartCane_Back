@@ -9,18 +9,13 @@ from jose import jwt, JWTError
 from models import User
 from config import settings
 from pydantic import BaseModel, EmailStr
-import smtplib
-from email.mime.text import MIMEText
 import re
 import random
 
 
+
 # 사용자 라우터
 router = APIRouter(prefix="/api/user")
-
-email_verification_codes = {} #이메일 인증번호 저장
-verified_emails = set()  # 인증 완료한 이메일을 저장할 집합
-
 
 # 아이디 중복 확인 라우터
 @router.get("/check-id/{id}")
@@ -36,6 +31,9 @@ def check_id(id: str, db: Session = Depends(get_db)):
     
     return {"detail": "사용 가능한 아이디입니다."}
 
+# 이메일과 인증번호 저장
+email_verification_codes = {}
+
 # 요청 데이터 모델
 class EmailRequest(BaseModel):
     email: EmailStr  # 이메일 형식 검증
@@ -45,31 +43,11 @@ class VerifyCodeRequest(BaseModel):
     code: int
 
 @router.post("/send-verification-code")
-def request_code(request: EmailRequest, db: Session = Depends(get_db)):
-    # 프론트엔드에서 전달한 request.email 사용
-    return send_verification_code(request.email)
-
-def send_verification_code(email: str):
-    verification_code = random.randint(1000, 9999)
-    email_verification_codes[email] = verification_code
-
-    print(f"Received email: {email}")      
-    print(f"발송된 인증번호: {verification_code}")
-
-    # 여기서는 실제 이메일 전송을 생략하고, 성공적으로 이메일을 받았음을 알려줍니다.
-    # SMTP 관련 코드는 주석 처리하거나 제거하였습니다.
-    # message = MIMEText(f"인증 코드: {verification_code}")
-    # message["Subject"] = "이메일 인증 코드"
-    # message["From"] = SENDER_EMAIL
-    # message["To"] = email
-
-    # 이메일 전송 로직 생략
-    # with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-    #     server.login(SENDER_EMAIL, SENDER_PASSWORD)
-    #     server.sendmail(SENDER_EMAIL, email, message.as_string())
-
-    # 단순히 detail 메시지를 반환
-    return {"detail": "인증번호를 발송했습니다"}
+def send_verification_code(request: EmailRequest, db: Session = Depends(get_db)):
+    result = user_crud.send_verification_code(db, request.email)
+    
+    print(f"전송 상태: {result['detail']}\n")
+    return result
 
 # 인증번호 확인 라우터
 @router.post("/verify-code")

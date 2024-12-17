@@ -1,15 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 from database import engine
-import models 
+import models
 from domain.user import user_router
 from domain.sensor import sensor_router
 from fastapi.middleware.cors import CORSMiddleware
-from domain.user.user_router import router as user_router
-
-# FastAPI 앱 생성 및 라우터 추가
-app = FastAPI()
-app.include_router(user_router)
 
 # 데이터베이스 테이블을 생성
 models.Base.metadata.create_all(bind=engine)
@@ -27,7 +22,7 @@ app.add_middleware(
 
 
 # 사용자 라우터 등록
-app.include_router(user_router)
+app.include_router(user_router.router)
 
 # 센서 데이터 라우터 등록
 app.include_router(sensor_router.router)

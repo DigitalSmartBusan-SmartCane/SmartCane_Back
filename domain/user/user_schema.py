@@ -1,11 +1,11 @@
 import re
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional
 
 # 회원가입 데이터 검증 모델
 class UserCreate(BaseModel):
     id: str
     username: str = Field(..., min_length=1, max_length=50, description="사용자명")
+    phone: str
     password1: str
     password2: str
     email: EmailStr
