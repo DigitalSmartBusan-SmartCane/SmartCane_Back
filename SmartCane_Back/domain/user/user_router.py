@@ -43,16 +43,11 @@ class VerifyCodeRequest(BaseModel):
     code: int
 
 @router.post("/send-verification-code")
-def send_verification_code(request: EmailRequest):
-    email = request.email
-    print(f"Received email: {email}")  # 이메일 확인용 로그
-
-    # 인증번호 생성
-    verification_code = random.randint(1000, 9999)
-    email_verification_codes[email] = verification_code
-    print(f"발송된 인증번호: {verification_code}")  # 테스트용 출력
-
-    return {"detail": "인증번호가 발송되었습니다."}
+def send_verification_code(request: EmailRequest, db: Session = Depends(get_db)):
+    result = user_crud.send_verification_code(db, request.email)
+    
+    print(f"전송 상태: {result['detail']}\n")
+    return result
 
 # 인증번호 확인 라우터
 @router.post("/verify-code")
