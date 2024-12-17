@@ -31,7 +31,7 @@ async def process_heartbeat_and_send_sms(heartbeat: int):
     """
     print(f"현재 심박수: {heartbeat}")
     
-    if heartbeat < 60:
+    if heartbeat < 50:
         registrations = fetch_registrations()
         print(f"Fetched registrations: {registrations}")
 
